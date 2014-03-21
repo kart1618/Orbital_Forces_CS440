@@ -25,7 +25,8 @@ public class Scorestats {
 	}
 	
 	public void setAmmocount (int ammo) {
-		this.ammo=ammo;
+		if (this.ammo > 0)
+			this.ammo=ammo;
 	}
 	
 	public int getScore() {
@@ -44,7 +45,7 @@ public class Scorestats {
 		this.fuelcells=fuelcells;
 	}
 	
-	public int getoxygentankscount() {
+	public int getOxygentankscount() {
 		return oxygentanks;
 	}
 	
@@ -56,14 +57,15 @@ public class Scorestats {
 	}
 	
 	public void setUnitscount (int units) {
-		this.units=units;
+		this.units = units;
 	}
+	
 	public int getLivescount() {
 		return lives;
 	}
 	
 	public void setLivescount (int lives) {
-		this.lives=lives;
+		this.lives = lives;
 	}
 	
 }

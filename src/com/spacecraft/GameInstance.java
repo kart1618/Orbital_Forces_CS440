@@ -1,6 +1,7 @@
 package com.spacecraft;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JPanel;
 
 import java.awt.Font;
@@ -17,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -26,8 +28,11 @@ import javax.swing.Timer;
 
 import javax.swing.ImageIcon;
 
-import org.imgscalr.Scalr;
 
+
+import com.media.AudioPlayer;
+import com.media.Videoplayer;
+import com.scoreconsolemanager.Persist;
 import com.scoreconsolemanager.Scorestats;
 import com.userprofiles.Createprofile;
 
@@ -41,39 +46,38 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	private Thread asteroid2;
 	private Thread asteroid3;
 	private Thread asteroid4;
+	private Thread asteroid5;
+	private Thread asteroid6;
 	private Thread radiation1;
 	private Thread radiation2;
 	private Thread radiation3;
+	private Thread soundTrack;
+	private AudioPlayer playSound;
+	private Videoplayer videoPlayer = new Videoplayer();
+	private Targetplanet tp = new Targetplanet();
+	private Scorestats sc = new Scorestats();
 	Asteroid1 asteroid1Innerclass = new Asteroid1();
 	Asteroid2 asteroid2Innerclass = new Asteroid2();
 	Asteroid3 asteroid3Innerclass = new Asteroid3();
 	Asteroid4 asteroid4Innerclass = new Asteroid4();
+	Asteroid5 asteroid5Innerclass = new Asteroid5();
+	Asteroid6 asteroid6Innerclass = new Asteroid6();
 	Radiation1 radiation1Innerclass = new Radiation1();
 	Radiation2 radiation2Innerclass = new Radiation2();
 	Radiation3 radiation3Innerclass = new Radiation3();
-	private Image star, cosmos, asteroid;
+	Pauseimage pauseImage = new Pauseimage();
+	SoundTrack soundtrack1 = new SoundTrack();
+	Persist prst = new Persist();
+	private Image star, cosmos, asteroid, asteroid_fade, asteroid_hearl, pause;
 	private Spacecraft craft;
 	private Timer timer;
-	private ArrayList asteroids;
 	private int gameTime;
 	private int B_WIDTH;
 	private int B_HEIGHT;
 	private Windowinit win2 = new Windowinit();
-	private int[][] pos = { 
-	        {2380, 29}, {2500, 59}, {1380, 89},
-	        {780, 109}, {580, 139}, {680, 239}, 
-	        {790, 259}, {760, 50}, {790, 150},
-	        {980, 209}, {560, 45}, {510, 70},
-	        {930, 159}, {590, 80}, {530, 60},
-	        {940, 59}, {990, 30}, {920, 200},
-	        {900, 259}, {660, 50}, {540, 90},
-	        {810, 220}, {860, 20}, {740, 180},
-	        {820, 128}, {490, 170}, {700, 30}
-	     };
-
-	private int x,y,x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7;
-	
+	private int x,y,x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8,x9,y9,x10,y10;
 	private final int DELAY = 50;
+	private boolean sessioninPlay = true;
 	
 	/**
 	 * Create the panel.
@@ -85,9 +89,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		
 		setBackground(Color.BLACK);
 		setDoubleBuffered(true);
-		
 		craft = new Spacecraft ();
-		
+		//craft
 		timer = new Timer(5, this);
         timer.start();
         ImageIcon i1 = new ImageIcon(this.getClass().getResource("/images/cosmos.gif"));
@@ -96,7 +99,13 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         star = i3.getImage();
         ImageIcon i4 = new ImageIcon(this.getClass().getResource("/images/asteroid.jpg"));
         asteroid = i4.getImage();
-         
+        ImageIcon i5 = new ImageIcon(this.getClass().getResource("/images/asteroid_hearl.gif"));
+        asteroid_hearl = i5.getImage();
+        ImageIcon i6 = new ImageIcon(this.getClass().getResource("/images/asteroid_fade.gif"));
+        asteroid_fade = i6.getImage();
+        ImageIcon i7 = new ImageIcon(this.getClass().getResource("/images/pause.jpg"));
+        pause = i7.getImage();
+        
          x = y = 10;
          x1 = 100;
          y1 = -40;
@@ -112,14 +121,41 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
          y6 = -10;
          x7 = 900;
          y7 = -100;
+         x8 = 900;
+         y8 = 500;
 	}
 	
+	private class SoundTrack implements Runnable
+	{
+		public void run ()
+		{
+			try {
+					try {
+						playSound = new AudioPlayer();
+					} catch (LineUnavailableException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			}
+			catch (InterruptedException e){
+        		System.out.println("Interrupted!");
+        	} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+		
 	private class Asteroid1 implements Runnable
 	{
 		private String asteroid1 = "/images/asteroid.jpg";
 		long shootInterval;
 	    private int width;
 	    private int height;
+	   
+	    
 	    private boolean visible;
 	    private Image image;
 	    
@@ -146,13 +182,28 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		public void setVisible(boolean visible) {
 	        this.visible = visible;
 	    }
-
-	    public Image getImage() {
+		
+		public Image getImage() {
 	        return image;
 	    }
 
-	    public Rectangle getBounds() {
+		
+		public Rectangle getBounds() {
 	        return new Rectangle(x1, y1, width, height);
+	    }
+	    	    
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
 	    }
 	    
 		private void asteroid1Cycle() {
@@ -189,6 +240,40 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        }
 	    }
 		
+		private void alien1Cycle() {
+	        x1 -= 1;
+	        y1 = 1;
+	        if (isVisible() == false) {
+	        	//x1 = 100;
+	        	x1 = 1200;
+	        	setVisible(true);
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e) {
+	        		System.out.println("Interrupted!");
+	        	}
+	        }
+        	
+	        if (x1 < -15) {//was 240
+	        	y1 = 1;
+	            x1 = 1500;
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e){
+	        		System.out.println("Interrupted!");
+	        	}
+	            
+	        }
+	        
+	        /*if (new Targetplanet().getTargetplanetreached()) {
+	        	x1 = y1 = -45;
+	        }*/
+	    }
+		
 		public void run ()
 		{
 			////
@@ -197,7 +282,9 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        beforeTime = System.currentTimeMillis();
 
 	        while (true) {
-	        	asteroid1Cycle();
+	        		asteroid1Cycle();
+	        	if (craft.isPaused() == true)
+	        	pausecheck();
 	        	repaint();
 	        	//if (isVisible() == false)
 	        	//	break;
@@ -259,6 +346,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        return new Rectangle(x2, y2, width, height);
 	    }
 		
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
 		private void asteroid2Cycle() {
 	        x2 += 1;
 	        y2 += 1;
@@ -301,6 +402,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
 	        while (true) {
 	        	asteroid2Cycle();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	        	repaint();
 	            timeDiff = System.nanoTime() - beforeTime;
 	            sleep = DELAY - timeDiff;
@@ -360,6 +463,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        return new Rectangle(x3, y3, width, height);
 	    }
 		
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
 		private void asteroid3Cycle() {
 	        x3 -= 1;
 	        y3 += 1;
@@ -380,7 +497,7 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        	x3 = 850;
 	        	y3 = -40;
 	            shootInterval = (new Random()).nextInt(10)*1000;
-	        	try{
+	        	try {
 	        	Thread.sleep(shootInterval);
 	        	}
 	        	catch (InterruptedException e){
@@ -402,6 +519,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        while (true) {
 	        	asteroid3Cycle();
 	        	repaint();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	            timeDiff = System.nanoTime() - beforeTime;
 	            sleep = DELAY - timeDiff;
 
@@ -493,6 +612,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        }
 	    }
 
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
 		public void run ()
 		{
 			long beforeTime, timeDiff, sleep;
@@ -501,6 +634,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
 	        while (true) {
 	        	asteroid4Cycle();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	        	repaint();
 	            timeDiff = System.currentTimeMillis() - beforeTime;
 	            sleep = DELAY - timeDiff;
@@ -518,9 +653,268 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		}
 	}
 
+	private class Asteroid5 implements Runnable
+	{
+		private String asteroid5 = "/images/asteroid_hearl.gif";
+		long shootInterval;
+	    private int width;
+	    private int height;
+	    private boolean visible;
+	    private Image image;
+	    
+		public Asteroid5 () {
+	        ImageIcon ii = new ImageIcon(this.getClass().getResource(asteroid5));
+	        image = ii.getImage();
+	        width = image.getWidth(null);
+	        height = image.getHeight(null);
+	        visible = true;
+	    }
+		
+		public int getX8() {
+			return x8;
+		}
+		
+		public int getY8() {
+			return y8;
+		}
+		
+		public boolean isVisible() {
+	        return visible;
+	    }
+	    
+		public void setVisible(boolean visible) {
+	        this.visible = visible;
+	    }
+
+	    public Image getImage() {
+	        return image;
+	    }
+
+	    public Rectangle getBounds() {
+	        return new Rectangle(x8, y8, width, height);
+	    }
+	    
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
+		private void asteroid5Cycle() {
+	        x8 -= 1;
+	        y8 -= 1;
+	        if (isVisible() == false) {
+	        	x8 = 900;
+	        	y8 = 500;
+	        	setVisible(true);
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e) {
+	        		System.out.println("Interrupted!");
+	        	}
+	        }
+        	
+	        if (y8 < -5) {//was 240
+	        	y8 = 500;
+	            x8 = 900;
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e){
+	        		System.out.println("Interrupted!");
+	        	}
+	            
+	        }
+	        
+	        if (new Targetplanet().getTargetplanetreached()) {
+	        	x8 = 900;
+	        	y8 = 500;
+	        }
+	    }
+		
+		public void run ()
+		{
+			////
+			long beforeTime, timeDiff, sleep;
+
+	        beforeTime = System.nanoTime();
+
+	        while (true) {
+	        	asteroid5Cycle();
+	        	if (craft.isPaused() == true)
+	        	pausecheck();
+	        	repaint();
+	        	//if (isVisible() == false)
+	        	//	break;
+	        	timeDiff = System.nanoTime() - beforeTime;
+	            sleep = DELAY - timeDiff;
+
+	            if (sleep < 0)
+	                sleep = 2;
+	            try {
+	                Thread.sleep(sleep);
+	            } catch (InterruptedException e) {
+	                System.out.println("interrupted");
+	            }
+
+	            beforeTime = System.nanoTime();
+	        }
+		}
+			
+	}
+	
+	private class Asteroid6 implements Runnable
+	{
+		private String asteroid6 = "/images/asteroid_fade.gif";
+		long shootInterval;
+	    private int width;
+	    private int height;
+	    private boolean visible;
+	    private Image image;
+	    
+		public Asteroid6 () {
+	        ImageIcon ii = new ImageIcon(this.getClass().getResource(asteroid6));
+	        image = ii.getImage();
+	        width = image.getWidth(null);
+	        height = image.getHeight(null);
+	        visible = true;
+	    }
+		
+		public int getX9() {
+			return x9;
+		}
+		
+		public int getY9() {
+			return y9;
+		}
+		
+		public boolean isVisible() {
+	        return visible;
+	    }
+	    
+		public void setVisible(boolean visible) {
+	        this.visible = visible;
+	    }
+
+	    public Image getImage() {
+	        return image;
+	    }
+
+	    public Rectangle getBounds() {
+	        return new Rectangle(x9, y9, width, height);
+	    }
+	    
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
+		private void asteroid6Cycle() {
+	        x9 = 700;
+	        y9 -= 1;
+	        if (isVisible() == false) {
+	        	x9 = 700;
+	        	y9 = 900;
+	        	setVisible(true);
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e) {
+	        		System.out.println("Interrupted!");
+	        	}
+	        }
+        	
+	        if (y9 < -5) {//was 240
+	        	y9 = 900;
+	            x8 = 700;
+	        	shootInterval = (new Random()).nextInt(10)*1000;
+	        	try{
+	        	Thread.sleep(shootInterval);
+	        	}
+	        	catch (InterruptedException e){
+	        		System.out.println("Interrupted!");
+	        	}
+	            
+	        }
+	        
+	        if (new Targetplanet().getTargetplanetreached()) {
+	        	x9 = -5;
+	        	y9 = -5;
+	        }
+	    }
+		
+		public void run ()
+		{
+			////
+			long beforeTime, timeDiff, sleep;
+
+	        beforeTime = System.nanoTime();
+
+	        while (true) {
+	        	asteroid6Cycle();
+	        	if (craft.isPaused() == true)
+	        	pausecheck();
+	        	repaint();
+	        	//if (isVisible() == false)
+	        	//	break;
+	        	timeDiff = System.nanoTime() - beforeTime;
+	            sleep = DELAY - timeDiff;
+
+	            if (sleep < 0)
+	                sleep = 2;
+	            try {
+	                Thread.sleep(sleep);
+	            } catch (InterruptedException e) {
+	                System.out.println("interrupted");
+	            }
+
+	            beforeTime = System.nanoTime();
+	        }
+		}
+			
+	}
+
 	//**********
 ///////////////////////////////////
 //..........
+	
+	private class Pauseimage {
+		
+		private String pauseImage = "/images/pause.jpg";
+		private Image image;
+		
+		Pauseimage() {
+			
+			ImageIcon ii = new ImageIcon(this.getClass().getResource(pauseImage));
+			image = ii.getImage();
+		}
+				
+		public Image getImage() {
+	        return image;
+	    }
+		
+	}
 	private class Radiation1 implements Runnable
 	{
 		private long shootInterval;
@@ -596,6 +990,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        }
 	    }
 
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
 		public void run ()
 		{
 			long beforeTime, timeDiff, sleep;
@@ -604,6 +1012,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
 	        while (true) {
 	        	asteroid2Cycle();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	        	repaint();
 	            timeDiff = System.currentTimeMillis() - beforeTime;
 	            sleep = DELAY - timeDiff;
@@ -697,6 +1107,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        	x6 = y6 = -45;
 	        }
 	    }
+		
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
 
 		public void run ()
 		{
@@ -706,6 +1130,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
 	        while (true) {
 	        	radiation2Cycle();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	        	repaint();
 	            timeDiff = System.nanoTime() - beforeTime;
 	            sleep = DELAY - timeDiff;
@@ -798,6 +1224,20 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	        }
 	    }
 
+	    private void pausecheck() {
+	    	while (true) {
+	    		try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		if (craft.isPaused() == false)
+	    			break;
+	    		//infinite loop for pause
+	    	}
+	    }
+	    
 		public void run ()
 		{
 			long beforeTime, timeDiff, sleep;
@@ -806,6 +1246,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
 	        while (true) {
 	        	asteroid3Cycle();
+	        	if (craft.isPaused() == true)
+		        	pausecheck();
 	        	repaint();
 	            timeDiff = System.currentTimeMillis() - beforeTime;
 	            sleep = DELAY - timeDiff;
@@ -831,17 +1273,24 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         asteroid2 = new Thread(asteroid2Innerclass);
         asteroid3 = new Thread(asteroid3Innerclass);
         asteroid4 = new Thread(asteroid4Innerclass);
+        asteroid5 = new Thread(asteroid5Innerclass);
+        asteroid6 = new Thread(asteroid6Innerclass);
         radiation1 = new Thread(radiation1Innerclass);
         radiation2 = new Thread(radiation2Innerclass);
         radiation3 = new Thread(radiation3Innerclass);
+        soundTrack = new Thread(soundtrack1);
         asteroid1.start();
         asteroid2.start();
         asteroid3.start();
         asteroid4.start();
+        asteroid5.start();
+        asteroid6.start();
         radiation1.start();
         radiation2.start();
         radiation3.start();
         animator.start();
+        soundTrack.start();
+        
         B_WIDTH = getWidth();
         B_HEIGHT = getHeight();
     }
@@ -854,10 +1303,13 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         
         if (!(new Targetplanet().getTargetplanetreached())) {
         g2d.drawImage(cosmos, 10, 10, null);
-        g2d.drawImage(cosmos, 499, 10, null);
-        g2d.drawImage(cosmos, 997, 150, null);// was 10
-        g2d.drawImage(cosmos, 10, 585, null);
-        g2d.drawImage(cosmos, 499, 585, null);
+        g2d.drawImage(cosmos, 10, 451, null);
+        g2d.drawImage(cosmos, 701, 451, null);
+        g2d.drawImage(cosmos, 701, 10, null);
+        //g2d.drawImage(cosmos, 1035, 10, null);
+        //g2d.drawImage(cosmos, 997, 150, null);// was 10
+        //g2d.drawImage(cosmos, 10, 585, null);
+        //g2d.drawImage(cosmos, 499, 585, null);
         //g2d.drawImage(cosmos, 997, 585, null);
         g2d.drawImage(star, x, y, this);
         g2d.drawImage(asteroid, x1, y1, this);
@@ -882,6 +1334,12 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         if (asteroid4Innerclass.isVisible())
             g2d.drawImage(asteroid4Innerclass.getImage(), asteroid4Innerclass.getX4(), asteroid4Innerclass.getY4(), this);
         
+        if (asteroid5Innerclass.isVisible())
+            g2d.drawImage(asteroid5Innerclass.getImage(), asteroid5Innerclass.getX8(), asteroid5Innerclass.getY8(), this);
+        
+        if (asteroid6Innerclass.isVisible())
+            g2d.drawImage(asteroid6Innerclass.getImage(), asteroid6Innerclass.getX9(), asteroid6Innerclass.getY9(), this);
+        
         if (radiation1Innerclass.isVisible())
             g2d.drawImage(radiation1Innerclass.getImage(), radiation1Innerclass.getX5(), radiation1Innerclass.getY5(), this);
         
@@ -890,20 +1348,25 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         
         if (radiation3Innerclass.isVisible())
             g2d.drawImage(radiation3Innerclass.getImage(), radiation3Innerclass.getX7(), radiation3Innerclass.getY7(), this);
+        
+        if (prst.pauseImageisVisible())
+        	g2d.drawImage(pauseImage.getImage(), 1215, 10, this);
         //
         Scorestats ss = new Scorestats();
         String banner = "STATS";
         String usrName = "User Name:"+new Createprofile().getUsername();
-        String lives = "Lives: "+ss.getLivescount();
-        String score = "Score: "+ss.getScore();
-        String ammo = "Ammo: "+ss.getAmmocount();
-        String oxygentanks = "Oxygen Tanks: "+ss.getoxygentankscount();
+        
+        
+        String lives = "Lives: "+ sc.getLivescount();
+        String score = "Score: "+ ss.getScore();
+        String ammo = "Ammo: "+ ss.getAmmocount();
+        String oxygentanks = "Oxygen Tanks: "+ss.getOxygentankscount();
         String fuelcells = "Fuel Cells: "+ss.getFuelcellscount();
         String units = "Units: "+ ss.getUnitscount();
         Font small = new Font("Helvetica", Font.BOLD, 14);
         FontMetrics metr = this.getFontMetrics(small);
 
-        g.setColor(Color.white);
+        g.setColor(Color.green);
         g.setFont(small);
         g.drawString(banner, (2200 - metr.stringWidth(banner)) / 2,
                      50 / 2);
@@ -924,13 +1387,18 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         //
         }
         
-        else 
+        else {
         	g2d.drawImage(new Targetplanet().getImage(), 497, 15, this);
+        	craft.setX(5);
+        	craft.setY(5);
+        }
         Toolkit.getDefaultToolkit().sync();
         g.dispose();
     }
 	
 	public boolean doWeland() {
+		
+		sessioninPlay = false;
 		int confirmed = JOptionPane.showConfirmDialog(null, 
 		        "Target Planet Reached ! Would you like to Land ?", "Orbital Forces",
 		        JOptionPane.YES_NO_OPTION);
@@ -938,21 +1406,25 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		    if (confirmed == JOptionPane.YES_OPTION) {
 		    	int conquer = JOptionPane.showConfirmDialog(null, "Number of Units you Command: "+ new Scorestats().getUnitscount()+ 
 		    		"\nNumber of Units required to Conquer this planet:"+ new Targetplanet().getUnitsreqd()+"\nConquer?");
-		    	if (conquer == JOptionPane.YES_OPTION && new Scorestats().getUnitscount() > new Targetplanet().getUnitsreqd()) {
-		    		JOptionPane.showMessageDialog(null, "You won the battle !");
-		    		//new Targetplanet().setTargetplanetreached(false);
-		    		new Scorestats().setAmmocount(new Scorestats().getAmmocount()+new Targetplanet().getPlanetammo());
-		    		new Scorestats().setFuelcellscount(new Scorestats().getFuelcellscount()+new Targetplanet().getPlanetfuelcells());
-		    		new Scorestats().setOxygentankscount(new Scorestats().getoxygentankscount()+new Targetplanet().getPlanetoxygentanks());
-		    		new Scorestats().setScore(new Scorestats().getScore()+new Targetplanet().getScoreattr());
-		    		new Scorestats().setUnitscount(new Scorestats().getUnitscount()+new Targetplanet().getUnitsreqd());
-		    		//Windowinit win2 = new Windowinit();
-		    		win2.trgtPlanetselect();
-		    		new Targetplanet().setTargetplanetreached(false);
-		    		return false;
-		    		//win2.gameStart();
+	    		
+		    	if (conquer == JOptionPane.YES_OPTION && sc.getUnitscount() > tp.getUnitsreqd()) {
+		    		videoPlayer.landingAVI();
 		    		
-		    		//System.exit(0);
+		    		JOptionPane.showMessageDialog(null, "You won the battle !");
+		    		
+		    		sc.setAmmocount(sc.getAmmocount()+tp.getPlanetammo());
+		    		sc.setFuelcellscount(sc.getFuelcellscount()+tp.getPlanetfuelcells());
+		    		sc.setOxygentankscount(sc.getOxygentankscount()+tp.getPlanetoxygentanks());
+		    		sc.setScore(sc.getScore()+tp.getScoreattr());
+		    		sc.setUnitscount(sc.getUnitscount()+tp.getUnitsreqd());
+		    		//sc.setLivescount(sc.getLivescount());
+		    		
+		    		new Persist(sc.getAmmocount(), sc.getScore(), sc.getFuelcellscount(), sc.getOxygentankscount(), sc.getUnitscount(), 3); // <- sc.getLivescount()
+		    		sessioninPlay = true;
+		    		//win2.trgtPlanetselect();
+		    		tp.setTargetplanetreached(false);
+		    		return false;
+		    		
 		    	}
 		    	
 		    	else if (conquer == JOptionPane.NO_OPTION) {
@@ -965,6 +1437,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		    	}
 		    	
 		    }
+		    
+		    else
 		    return true;
     }
 
@@ -984,7 +1458,11 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 		{
 			craft.setX(5);
 			craft.setY(5);
-			new Scorestats().setLivescount(new Scorestats().getLivescount() - 1);  //Decrementing lives by 1.
+			//livesCntr++;
+			//System.out.println("Before Decrementing: "+sc.getLivescount());
+			if(sessioninPlay) {
+			sc.setLivescount(sc.getLivescount() - 1);  //Decrementing lives by 1.
+			}
 			repaint();
 			craft.setVisible(true);
 			craft.move();
@@ -993,6 +1471,8 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         checkCollisionswithastroid2();
         checkCollisionswithastroid3();
         checkCollisionswithastroid4();
+        checkCollisionswithastroid5();
+        checkCollisionswithastroid6();
         checkCollisionswithradiation1();
         checkCollisionswithradiation2();
         checkCollisionswithradiation3();
@@ -1002,24 +1482,24 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 	public void checkCollisionswithastroid1() {
 
         Rectangle r3 = craft.getBounds();
-        Rectangle r2 = asteroid1Innerclass.getBounds();
-        
-            if (r3.intersects(r2)) {
+        Rectangle r4 = asteroid1Innerclass.getBounds();
+               if (r3.intersects(r4)) {
                 craft.setVisible(false);
-                asteroid1Innerclass.setVisible(false);  
+                asteroid1Innerclass.setVisible(false);
             }
-        ArrayList ms = craft.getMissiles();
+        	
+	ArrayList ms = craft.getMissiles();
 
     for (int i = 0; i < ms.size(); i++) {
         Ammo m = (Ammo) ms.get(i);
 
         Rectangle r1 = m.getBounds();
 
-            if (r1.intersects(r2)) {
+           if (r1.intersects(r4)) {
             	asteroid1Innerclass.setVisible(false);
             	m.setVisible(false);
             	new Scorestats().setScore(new Scorestats().getScore() + 50);
-            }
+            }               
         }
     }
 
@@ -1029,7 +1509,7 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         Rectangle r4 = asteroid2Innerclass.getBounds();
                if (r3.intersects(r4)) {
                 craft.setVisible(false);
-                asteroid2Innerclass.setVisible(false);  
+                asteroid2Innerclass.setVisible(false);
             }
         	
 	ArrayList ms = craft.getMissiles();
@@ -1053,7 +1533,7 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         Rectangle r4 = asteroid3Innerclass.getBounds();
                if (r3.intersects(r4)) {
                 craft.setVisible(false);
-                asteroid3Innerclass.setVisible(false);  
+                asteroid3Innerclass.setVisible(false);
             }
         	
 	ArrayList ms = craft.getMissiles();
@@ -1095,6 +1575,54 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
         }
     }
 
+	public void checkCollisionswithastroid5() {
+
+        Rectangle r3 = craft.getBounds();
+        Rectangle r4 = asteroid5Innerclass.getBounds();
+               if (r3.intersects(r4)) {
+                craft.setVisible(false);
+                asteroid5Innerclass.setVisible(false);  
+            }
+        	
+	ArrayList ms = craft.getMissiles();
+
+    for (int i = 0; i < ms.size(); i++) {
+        Ammo m = (Ammo) ms.get(i);
+
+        Rectangle r1 = m.getBounds();
+
+           if (r1.intersects(r4)) {
+            	asteroid5Innerclass.setVisible(false);
+            	m.setVisible(false);
+            	new Scorestats().setScore(new Scorestats().getScore() + 100);
+            }               
+        }
+    }
+
+	public void checkCollisionswithastroid6() {
+
+        Rectangle r3 = craft.getBounds();
+        Rectangle r4 = asteroid5Innerclass.getBounds();
+               if (r3.intersects(r4)) {
+                craft.setVisible(false);
+                asteroid6Innerclass.setVisible(false);  
+            }
+        	
+	ArrayList ms = craft.getMissiles();
+
+    for (int i = 0; i < ms.size(); i++) {
+        Ammo m = (Ammo) ms.get(i);
+
+        Rectangle r1 = m.getBounds();
+
+           if (r1.intersects(r4)) {
+            	asteroid6Innerclass.setVisible(false);
+            	m.setVisible(false);
+            	new Scorestats().setScore(new Scorestats().getScore() + 100);
+            }               
+        }
+    }
+	
 	public void checkCollisionswithradiation1() {
 
         Rectangle r3 = craft.getBounds();
@@ -1138,21 +1666,58 @@ public class GameInstance extends JPanel implements Runnable, ActionListener {
 
     public void run() {
 
-        int gameDuration;
-        while(true) {
+        int gameDuration, timeUp, timeSlices;
+        
+       while(true) {
+    	   
         //gameDuration = (new Targetplanet().getGametime())*1000;
-        gameDuration = 20000;
+        gameDuration =  20000;//120000;
+        timeUp = 0;
+        timeSlices = 2000;
         try {
-            Thread.sleep(gameDuration);
+        	while (timeUp != gameDuration) {
+        		timeUp += timeSlices;
+        	Thread.sleep(timeSlices);
+        	if (sc.getLivescount() == 0) {
+        		Thread.interrupted();
+        		break;
+        		}
+        	}
         } catch (InterruptedException e) {
             System.out.println("interrupted");
         }
         
-        new Targetplanet().setTargetplanetreached(true);
-        repaint();
-        if (doWeland()) break;
-        }
+        if (sc.getLivescount() == 0) break;
         
-        System.exit(0);
+        if (!(craft.isPaused()) && craft.getPausetogglevalue()==1) {
+        	
+        	tp.setTargetplanetreached(true);
+        	repaint();
+        
+        	if (doWeland()) break;
+       
+        }
+        else
+        	craft.setPausetogglevalue(1);
+       }
+       
+       		
+		try {
+			AudioPlayer playsound = new AudioPlayer(2);
+			Thread.sleep(2000);
+			 System.exit(0);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	 catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (LineUnavailableException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    	
+      
     }
 }

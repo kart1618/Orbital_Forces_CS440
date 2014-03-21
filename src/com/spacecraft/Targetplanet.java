@@ -14,67 +14,76 @@ public class Targetplanet {
 	private static int planetOxygentanks;
 	private static int scoreAttr;
 	private static boolean targetplanetReached;
+	private static boolean[] attempted = {false,false,false,false,false,false};
 	private static Image image;
 	private static ImageIcon ii;
+	Randomize rz = new Randomize();
 	
 	public void setName(String name) {
 		this.name = name;
 		if (name.equalsIgnoreCase("AMAZONIA")) {
-    		gameTime = 45;
-    		unitsReqd = 30;
-    		planetAmmo = 100;
-    		planetFuelcells = 33;
-    		planetOxygentanks = 22;
-    		scoreAttr = 500;
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
     		ii = new ImageIcon(this.getClass().getResource("/images/amazonia.jpg"));
 		}
     	else if (name.equalsIgnoreCase("CYCLOPIA")) {
-    		gameTime = 60;
-    		unitsReqd = 40;
-    		planetAmmo = 105;
-    		planetFuelcells = 40;
-    		planetOxygentanks = 25;
-    		scoreAttr = 732;
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
     		ii = new ImageIcon(this.getClass().getResource("/images/cyclopia.jpg"));
     	}
     	else if (name.equalsIgnoreCase("OSIRIS")) {
-    		gameTime = 75;
-    		unitsReqd = 50;
-    		planetAmmo = 111;
-    		planetFuelcells = 44;
-    		planetOxygentanks = 38;
-    		scoreAttr = 987;
-    		ii = new ImageIcon(this.getClass().getResource("/images/osiris.jpg"));
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
+    		ii = new ImageIcon(this.getClass().getResource("/images/osiris_4.jpg"));
     	}
     	else if (name.equalsIgnoreCase("SIMIAN_7")) {
-    		gameTime = 90;
-    		unitsReqd = 78;
-    		planetAmmo = 126;
-    		planetFuelcells = 59;
-    		planetOxygentanks = 40;
-    		scoreAttr = 1219;
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
     		ii = new ImageIcon(this.getClass().getResource("/images/simian_7.png"));
     	}
     	else if (name.equalsIgnoreCase("CHAPEK_9")) {
-    		gameTime = 115;
-    		unitsReqd = 91;
-    		planetAmmo = 134;
-    		planetFuelcells = 61;
-    		planetOxygentanks = 55;
-    		scoreAttr = 1324;
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
     		ii = new ImageIcon(this.getClass().getResource("/images/chapek_9.jpg"));
     	}
     	else if (name.equalsIgnoreCase("SPHERON_1")) {
-    		gameTime = 140;
-    		gameTime = 120;
-    		unitsReqd = 94;
-    		planetAmmo = 137;
-    		planetFuelcells = 63;
-    		planetOxygentanks = 56;
-    		scoreAttr = 1500;
+    		gameTime = rz.gameTime();
+    		unitsReqd = rz.unitsReqd();
+    		planetAmmo = rz.ammoReqd();
+    		planetFuelcells = rz.fuelcellsReqd();
+    		planetOxygentanks = rz.o2tanksReqd();
+    		scoreAttr = rz.scoreAttned();
     		ii = new ImageIcon(this.getClass().getResource("/images/spheron_1.jpg"));
     	}
 
+	}
+	
+	public void setTargetplanetreached(boolean targetplanetReached) {
+    	this.targetplanetReached = targetplanetReached;
+    }
+	
+	public void setAttempted (int planetNum) {
+		this.attempted[planetNum] = true;
 	}
 	
 	public Image getImage() {
@@ -85,9 +94,9 @@ public class Targetplanet {
 		return this.name;
 	}
 	
-	public void setTargetplanetreached(boolean targetplanetReached) {
-    	this.targetplanetReached = targetplanetReached;
-    }
+	public boolean getAttempted (int planetNum) {
+		return attempted[planetNum];
+	}
 	
     public boolean getTargetplanetreached() {
     	return this.targetplanetReached;

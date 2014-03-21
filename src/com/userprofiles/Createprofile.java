@@ -24,15 +24,17 @@ public class Createprofile {
 	private static final int INITIAL_OXYGENTANK_COUNT = 750;
 	private static final int INITIAL_UNIT_COUNT = 50;
 	private static final int INITIAL_LIVES_COUNT = 3;
+	
 	public Createprofile(String username, String name, String sex) {
 		this.name = name;
 		this.username = username;
 		this.sex = sex;
-		this.profile = this.username+"-"+this.name+"-"+this.sex+"\n"+String.valueOf(INITIAL_AMMO_COUNT)+"\n"+String.valueOf(INITIAL_SCORE_COUNT)+"\n"+String.valueOf(INITIAL_FUELCELL_COUNT)+"\n"+String.valueOf(INITIAL_OXYGENTANK_COUNT)+"\n"+String.valueOf(INITIAL_UNIT_COUNT)+"\n"+String.valueOf(INITIAL_LIVES_COUNT);
+		this.profile = this.username+"-"+this.name+"-"+this.sex;
 		new Scorestats(INITIAL_AMMO_COUNT, INITIAL_SCORE_COUNT, INITIAL_FUELCELL_COUNT, INITIAL_OXYGENTANK_COUNT, INITIAL_UNIT_COUNT, INITIAL_LIVES_COUNT);
 	}
 	
 	public Createprofile() {
+		
 	}
 	
 	public String getUsername () {	
@@ -45,6 +47,18 @@ public class Createprofile {
 	
 	public String getGender() {
 		return this.sex;
+	}
+	
+	public void setUsername (String username) {	
+		this.username = username;
+	}
+	
+	public void setName (String name) {
+		this.name = name;
+	}
+	
+	public void setGender(String sex) {
+		this.sex = sex;
 	}
 
 	public boolean isCreated() {
@@ -61,6 +75,19 @@ public class Createprofile {
 		try {
 			out = new BufferedWriter (new FileWriter ("C:/Users/Profiles/"+username+".txt", true));
 			out.write(profile+"\n");
+			//out.write("\n");
+			out.write(String.valueOf(INITIAL_AMMO_COUNT));
+			out.write("\n");
+			out.write(String.valueOf(INITIAL_SCORE_COUNT));
+			out.write("\n");
+			out.write(String.valueOf(INITIAL_FUELCELL_COUNT));
+			out.write("\n");
+			out.write(String.valueOf(INITIAL_OXYGENTANK_COUNT));
+			out.write("\n");
+			out.write(String.valueOf(INITIAL_UNIT_COUNT));
+			out.write("\n");
+			out.write(String.valueOf(INITIAL_LIVES_COUNT));
+			out.write("\n");
 			out.close();
 		}
 		catch (IOException e) {
