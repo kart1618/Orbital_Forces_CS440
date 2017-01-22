@@ -1,4 +1,4 @@
 Orbital_Forces_CS440
 ====================
 
-2D Swing Application
+This is a 2D game developed using Java Swing.
